@@ -11,7 +11,8 @@ class Tracker(Alias):
 
         ap.add_argument('name', help=f'ISIN or alias identifying a security.')
         ap.add_argument('tracker', help=f'Trakcer symbol on yahoo finance.')
-        ap.add_argument('info_tracker', nargs='?', default=None, help=f'Tracker symbol on yahoo finance.')
+        ap.add_argument('--info', default=None, help=f'Tracker symbol on yahoo finance.')
+        ap.add_argument('--currency', default=None, help=f'Tracker symbol on yahoo finance.')
 
         ap.add_argument('--verbose', '-v', action='store_true', default=False, help='Verbose printing.')
         ap.add_argument('--weak-match', action='store_true', default=False, help='Enables weak matching of isin and alias for <name>')
@@ -30,7 +31,7 @@ class Tracker(Alias):
             return
 
         isin = next(iter(names))
-        Trackers().set_tracker(isin, args.tracker, args.info_tracker)
+        Trackers().set_tracker(isin, args.tracker, args.info, args.currency)
 
 
 
@@ -49,5 +50,7 @@ class Tracker(Alias):
     def get_complete_args(self):
         return {
             '--verbose':    (0, [], None),
+            '--info':       (1, [], None),
+            '--currency':   (1, [], None),
             '--weak-match': (0, [], None),
         }

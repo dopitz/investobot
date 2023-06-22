@@ -12,7 +12,7 @@ class Stats(Alias):
         ap = argparse.ArgumentParser()
         ap.add_argument('tool', choices=['stats'], help=f'Subcommand stats')
 
-        ap.add_argument('name', nargs="+", help=f'ISIN or alias identifying a security.')
+        ap.add_argument('name', nargs="*", help=f'ISIN or alias identifying a security.')
 
         ap.add_argument('--verbose', '-v', action='store_true', default=False, help='Verbose printing.')
         ap.add_argument('--weak-match', action='store_true', default=False, help='Enables weak matching of isin and alias for <name>')
@@ -21,6 +21,11 @@ class Stats(Alias):
 
         config.set_config(args)
 
+
+        if not args.name:
+            isins = Tracker().get_tracked()
+            names = [Aliases().get_favourite(n) for n in isins]
+            args.name = [n if n else i for n,i in zip(names, isins)]
 
         df = self.__get_docs(args)
 
@@ -45,6 +50,12 @@ class Stats(Alias):
             isin = next(iter(name))
 
             docs = documents.Documents().get(isin)
+
+            isin_div = Aliases().get_dividend_cash(isin)
+            if isin_div:
+                docs_div = documents.Documents().get(isin_div)
+                docs = pd.concat([docs, docs_div.loc[docs_div.Type == documents.DocType.DIVIDEND]])
+
             df[n] = (isin, docs)
 
         return df
@@ -83,7 +94,8 @@ class Stats(Alias):
             for col in ['expenses', 'dividends', 'invest_value', 'net_value', 'estimate_sell_fees', 'estimate_sell_taxes', 'net_value_adjusted', 'fees', 'taxes']:
                 summary[col] = prices[col] if col not in summary else summary[col] + prices[col]
 
-        df['summary'] = summary
+        if len(df) > 1:
+            df['summary'] = summary
 
         for n, prices in df.items():
             prices['ddividends'] = prices.dividends.diff()
@@ -94,6 +106,22 @@ class Stats(Alias):
             prices['performance_percent'] = 100 / prices.expenses * prices.performance
             prices['performance_adjusted'] = prices.net_value_adjusted - prices.expenses
             prices['performance_adjusted_percent'] = 100 / prices.expenses * prices.performance_adjusted
+
+            prices['dividend_yield'] = 0
+            prices['dividend_yield_until_now'] = 0
+            prices['year'] = prices.date.apply(lambda x: x.year)
+            dividend_yield_sum = 0
+            count = 0
+            g = prices.groupby('year')
+            for y in g.groups:
+                gy = g.get_group(y)
+                count = count + 1
+
+                dividend_yield = (100 / gy.expenses * gy.ddividends).loc[prices.year ==y].sum()
+                dividend_yield_sum = dividend_yield_sum + dividend_yield
+
+                prices.loc[prices.year == y, 'dividend_yield'] = dividend_yield
+                prices.loc[prices.year == y, 'dividend_yield_until_now'] = dividend_yield_sum / count
 
         return df
 
@@ -107,24 +135,27 @@ class Stats(Alias):
                 rows=1, cols=1,
             )
 
-            prices['hovertext'] =                                   '<br>-------------------------------------------------------------------' + \
-                                                                    '<br>net value' + \
-                                                                    '<br>     investment value (inc. fees and taxes)   : ' + prices.invest_value.apply(         lambda x: f'{x:8.2f}') + \
-                                                                    '<br>     cum. dividends                           : ' + prices.dividends.apply(            lambda x: f'{x:8.2f}') + \
-                                                                    '<br>    (cum. fees)                               : ' + prices.fees.apply(                 lambda x: f'        ({-x:8.2f})') + \
-                                                                    '<br>    (cum. taxes)                              : ' + prices.taxes.apply(                lambda x: f'        ({-x:8.2f})') + \
-                                                                    '<br>                                               --------------------' + \
-                                                                    '<br>                                                ' + prices.net_value.apply(            lambda x: f'{x:8.2f}') + \
-                                                                    '<br>-------------------------------------------------------------------' + \
-                                                                    '<br>net value (adjusted)' + \
-                                                                    '<br>      estimated fees (sell)                   : ' + prices.estimate_sell_fees.apply(   lambda x: f'         {-x:8.2f}') + \
-                                                                    '<br>      estimated taxes (sell)                  : ' + prices.estimate_sell_taxes.apply(  lambda x: f'         {-x:8.2f}') + \
-                                                                    '<br>                                               --------------------' + \
-                                                                    '<br>                                                ' + prices.net_value_adjusted.apply(   lambda x: f'{x:8.2f}') + \
-                                                                    '<br>-------------------------------------------------------------------' + \
-                                                                    '<br>performance                                   : ' + prices.performance.apply(          lambda x: f'{x:8.2f}') + prices.performance_percent.apply(          lambda x: f'({x:5.2f}%)') + \
-                                                                    '<br>            (adjusted)                        : ' + prices.performance_adjusted.apply( lambda x: f'{x:8.2f}') + prices.performance_adjusted_percent.apply( lambda x: f'({x:5.2f}%)') + \
-                                                                    '<br>-------------------------------------------------------------------' + \
+            prices['hovertext'] =   '<br>-------------------------------------------------------------------' + \
+                                    '<br>net value' + \
+                                    '<br>     investment value (inc. fees and taxes)   : ' + prices.invest_value.apply(         lambda x: f'{x:8.2f}') + \
+                                    '<br>     cum. dividends                           : ' + prices.dividends.apply(            lambda x: f'{x:8.2f}') + \
+                                    '<br>    (cum. fees)                               : ' + prices.fees.apply(                 lambda x: f'         ({-x:8.2f})') + \
+                                    '<br>    (cum. taxes)                              : ' + prices.taxes.apply(                lambda x: f'         ({-x:8.2f})') + \
+                                    '<br>                                               --------------------' + \
+                                    '<br>                                                ' + prices.net_value.apply(            lambda x: f'{x:8.2f}') + \
+                                    '<br>-------------------------------------------------------------------' + \
+                                    '<br>net value (adjusted)' + \
+                                    '<br>      estimated fees (sell)                   : ' + prices.estimate_sell_fees.apply(   lambda x: f'         {-x:8.2f}') + \
+                                    '<br>      estimated taxes (sell)                  : ' + prices.estimate_sell_taxes.apply(  lambda x: f'         {-x:8.2f}') + \
+                                    '<br>                                               --------------------' + \
+                                    '<br>                                                ' + prices.net_value_adjusted.apply(   lambda x: f'{x:8.2f}') + \
+                                    '<br>-------------------------------------------------------------------' + \
+                                    '<br>performance                                   : ' + prices.performance.apply(          lambda x: f'{x:8.2f}') + prices.performance_percent.apply(          lambda x: f' ({x:5.2f}%)') + \
+                                    '<br>            (adjusted)                        : ' + prices.performance_adjusted.apply( lambda x: f'{x:8.2f}') + prices.performance_adjusted_percent.apply( lambda x: f' ({x:5.2f}%)') + \
+                                    '<br>-------------------------------------------------------------------' + \
+                                    '<br>dividend yield ' + prices.year.apply(str) + '                           : ' + prices.dividend_yield.apply(       lambda x: f'{x:8.2f}%') + \
+                                    '<br>               p.a. average until today       : ' + prices.dividend_yield_until_now.apply(lambda x: f'{x:8.2f}%') + \
+                                    '<br>-------------------------------------------------------------------' + \
                 (prices.ddividends + prices.dfees + prices.dtaxes).apply(lambda x: '<br>Single day payments:' if x else '') + \
                 prices.ddividends.apply(lambda x: '' if x == 0 else f'<br>     dividends:                                 {x:8.2f}') + \
                 prices.dfees.apply(     lambda x: '' if x == 0 else f'<br>     fees:                                                {-x:8.2f}') + \

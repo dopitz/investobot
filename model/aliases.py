@@ -13,6 +13,9 @@ class Aliases(DB):
         if not self.has_table('alias_favourites') and not config.DRYRUN:
             self.execute('CREATE TABLE "alias_favourites" ("ISIN" TEXT, "alias" TEXT)')
 
+        if not self.has_table('dividend_cash') and not config.DRYRUN:
+            self.execute('CREATE TABLE "dividend_cash" ("ISIN" TEXT, "ISIN_DIV" TEXT)')
+
 
     def match_name(self, name: str, weak_match: bool = False):
         if weak_match:
@@ -31,7 +34,7 @@ class Aliases(DB):
     def get_favourite(self, name: str):
         names = self.match_name(name)
         if len(names) == 1:
-            df = pd.read_sql(f'SELECT * from alias_favourites WHERE ISIN LIKE {next(iter(names))}', self.conn)
+            df = pd.read_sql(f'SELECT * from alias_favourites WHERE ISIN LIKE "{next(iter(names))}"', self.conn)
             if not df.empty:
                 return df.alias[0]
         return None
@@ -62,4 +65,18 @@ class Aliases(DB):
     def delete_alias(self, alias: str):
         self.execute(f'DELETE FROM aliases WHERE alias LIKE "{alias}"')
 
+
+
+    def set_dividend_cash(self, isin: str, isin_div: str):
+        df = pd.DataFrame({'ISIN': [isin], 'ISIN_DIV': [isin_div]})
+        df.to_sql('dividend_cash', self.conn, if_exists='append', index=False)
+
+    def get_dividend_cash(self, isin: str):
+        df = pd.read_sql(f'SELECT * FROM dividend_cash WHERE ISIN LIKE "{isin}"', self.conn)
+        if not df.empty:
+            return df.ISIN_DIV[0]
+        return None
+
+    def delete_dividend_cash_isin(self, isin: str):
+        self.execute(f'DELETE FROM dividend_cash WHERE isin LIKE {isin}')
 
