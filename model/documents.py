@@ -79,7 +79,7 @@ class Documents(DB):
 
 
     def get(self, isin: str = None):
-        df = pd.read_sql('SELECT * from documents ORDER BY ID', self.conn)
+        df = pd.read_sql('SELECT * from documents ORDER BY ApplicationDate', self.conn)
         if isin:
             df = df.loc[df.ISIN == isin]
         df.ApplicationDate = pd.to_datetime(df.ApplicationDate).apply(lambda x: x.date())
@@ -91,7 +91,8 @@ class Documents(DB):
         for i,row in cancel.iterrows():
             content = json.loads(row.Content)
             df = df.loc[ordernr != content['OrderNumber']['value']]
-            df = df.loc[ordernr != content['CancelOrderNumber']['value']]
+            if 'CancelOrderNumber' in content:
+                df = df.loc[ordernr != content['CancelOrderNumber']['value']]
 
         return df
 

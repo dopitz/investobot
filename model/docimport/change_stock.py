@@ -15,11 +15,12 @@ class ChangeStocksDoc(Doc):
         if p == -1:
             return False
 
+
         text = text[p+len(table_headline)+1:]
 
         s = text.split()
+
         p = s.index('(WKN):')
-        q = s.index('Auftragsnummer')
 
         self.content = {
             'SecurityName': {
@@ -43,11 +44,14 @@ class ChangeStocksDoc(Doc):
                 'source': 'Auftragsnummer',
                 'value': s[3],
             },
-            'CancelOrderNumber' : {
-                'source': 'Storno',
-                'value': s[q+1],
-            },
         }
+
+        if 'Auftragsnummer' in s:
+            p = s.index('Auftragsnummer')
+            self.content['CancelOrderNumber'] = {
+                    'source': 'Storno',
+                    'value': s[p+1][:-1],
+                }
 
 
     def get_isin(self):

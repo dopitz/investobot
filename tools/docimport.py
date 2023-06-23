@@ -28,13 +28,14 @@ class Docimport:
         if args.fix_names:
             import json
             from model.documents import Documents
+            from model.aliases import Aliases
 
             docs = Documents().get()
             for i, row in docs.iterrows():
                 isin = row.ISIN
                 name = json.loads(row.Content)['SecurityName']['value']
 
-                aliases.make_alias(isin, name)
+                Aliases().make_alias(isin, name)
 
 
 

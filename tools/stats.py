@@ -232,6 +232,7 @@ class Stats(Alias):
 
 
 
+
     def get_complete_positional_args_options(self, args):
         if len(args) > 1:
             return None

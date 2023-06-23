@@ -1,6 +1,6 @@
 from .field import Field, parse_fields, parse_name_value, parse_name_unit_value, parse_datetime
 
-ORDER_NR        = Field('Ordernummer', 'OrderNo', parse_name_value)
+ORDER_NR        = Field('Ordernummer', 'OrderNumber', parse_name_value)
 ISIN            = Field('ISIN (WKN)', 'ISIN', parse_name_value)
 SECURITY_NAME   = Field('Wertpapierbezeichnung', 'SecurityName', parse_name_value)
 NOMINAL         = Field('Nominale', 'Nominal', parse_name_unit_value)

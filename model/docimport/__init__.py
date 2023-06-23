@@ -34,7 +34,6 @@ def import_pdf(filename: str, archive: str):
 
     import_filename = archive + os.path.sep + uuid.uuid4().hex + '.pdf'
 
-
     doc = None
     if subject.startswith('Wertpapierabrechnung') and 'Kauf' in subject:
         doc = InvoiceBuy(text)
