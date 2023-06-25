@@ -132,7 +132,8 @@ class Stats(Alias):
         for n, prices in df.items():
 
             fig = make_subplots(
-                rows=1, cols=1,
+                rows=1, cols=2,
+                column_widths=[5,1],
             )
 
             prices['hovertext'] =   '<br>-------------------------------------------------------------------' + \
@@ -160,6 +161,7 @@ class Stats(Alias):
                 prices.ddividends.apply(lambda x: '' if x == 0 else f'<br>     dividends:                                 {x:8.2f}') + \
                 prices.dfees.apply(     lambda x: '' if x == 0 else f'<br>     fees:                                                {-x:8.2f}') + \
                 prices.dtaxes.apply(    lambda x: '' if x == 0 else f'<br>     taxes:                                               {-x:8.2f}')
+
             
 
             fig.add_trace(go.Scatter(
@@ -209,6 +211,20 @@ class Stats(Alias):
                 hoverinfo='none',
                 name=f'fees'
             ))
+
+            fig.add_trace(go.Scatter(x=[0,1,1,0], y=[0,0,1,1], fill='toself', fillcolor='white'), row=1, col=2)
+
+            fig.add_annotation({
+                'font': {
+                    'family':'Courier New, Droid Sans Mono',
+                    'size':16,
+                },
+                'text': prices.hovertext.iloc[-1],
+            },row=1,col=2)
+                
+                
+            fig.update_xaxes(range=[0.1,0.9],showticklabels=False, row=1, col=2)
+            fig.update_yaxes(range=[0.1,0.9],showticklabels=False, row=1, col=2)
 
             fig.update_traces(hovertemplate=None)
             fig.update_layout(

@@ -1,1 +1,2 @@
-pip install pandas pandas_datareader scikit-learn yahooquer plotly pypdf2
+#/bin/bash
+pip install pandas pandas_datareader scikit-learn yahooquery plotly pypdf2

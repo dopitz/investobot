@@ -75,7 +75,7 @@ class Tracker(DB):
             prices.adjclose = prices.adjclose * currency.adjclose
 
         # re-index and ffill to also have data on weekends and holidays for every ticker
-        prices.index = pd.DatetimeIndex(pd.to_datetime(prices.date).apply(lambda x: x.date))
+        prices.index = pd.DatetimeIndex(pd.to_datetime(prices.date).apply(lambda x: x.date()))
         prices = prices.reindex(pd.date_range(prices.index.min(), date.today()), fill_value=None)
         prices = prices.ffill()
         prices.date = prices.index
