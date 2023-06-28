@@ -3,6 +3,7 @@
 import sys
 
 from tools.complete import Complete
+from tools.backup import Backup
 from tools.docimport import Docimport
 from tools.alias import Alias
 from tools.tracker import Tracker
@@ -11,6 +12,7 @@ from tools.stats import Stats
 import model.estimate_provision
 
 tools = {
+    'backup': Backup(),
     'docimport': Docimport(),
     'alias': Alias(),
     'tracker': Tracker(),

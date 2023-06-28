@@ -117,7 +117,7 @@ class Stats(Alias):
                 gy = g.get_group(y)
                 count = count + 1
 
-                dividend_yield = (100 / gy.expenses * gy.ddividends).loc[prices.year ==y].sum()
+                dividend_yield = (100 / gy.expenses * gy.ddividends).loc[prices.year == y].sum()
                 dividend_yield_sum = dividend_yield_sum + dividend_yield
 
                 prices.loc[prices.year == y, 'dividend_yield'] = dividend_yield
@@ -220,6 +220,7 @@ class Stats(Alias):
                     'size':16,
                 },
                 'text': prices.hovertext.iloc[-1],
+                'align':'left',
             },row=1,col=2)
                 
                 
