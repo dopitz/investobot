@@ -6,6 +6,8 @@ from model.tracker import Tracker
 import model.documents as documents
 import pandas as pd
 
+yoy_days = 365
+
 class Stats(Alias):
     def run(self):
         import argparse
@@ -104,24 +106,33 @@ class Stats(Alias):
 
             prices['performance'] = prices.net_value - prices.expenses
             prices['performance_percent'] = 100 / prices.expenses * prices.performance
+            prices['performance_yoy'] = prices.net_value.diff(yoy_days) - prices.expenses.diff(yoy_days)
+            prices['performance_yoy_percent'] = 100 / prices.expenses.rolling(yoy_days).mean() * prices.performance_yoy
+
             prices['performance_adjusted'] = prices.net_value_adjusted - prices.expenses
             prices['performance_adjusted_percent'] = 100 / prices.expenses * prices.performance_adjusted
+            prices['performance_adjusted_yoy'] = prices.net_value_adjusted.diff(yoy_days) - prices.expenses.diff(yoy_days)
+            prices['performance_adjusted_yoy_percent'] = 100 / prices.expenses.rolling(yoy_days).mean() * prices.performance_adjusted_yoy
 
-            prices['dividend_yield'] = 0
-            prices['dividend_yield_until_now'] = 0
             prices['year'] = prices.date.apply(lambda x: x.year)
             dividend_yield_sum = 0
+            dividend_yield_sum_percent = 0
             count = 0
             g = prices.groupby('year')
             for y in g.groups:
                 gy = g.get_group(y)
                 count = count + 1
 
-                dividend_yield = (100 / gy.expenses * gy.ddividends).loc[prices.year == y].sum()
+                dividend_yield = gy.ddividends.loc[prices.year == y].sum()
+                dividend_yield_percent = (100 / gy.expenses * gy.ddividends).loc[prices.year == y].sum()
+
                 dividend_yield_sum = dividend_yield_sum + dividend_yield
+                dividend_yield_sum_percent = dividend_yield_sum_percent + dividend_yield_percent
 
                 prices.loc[prices.year == y, 'dividend_yield'] = dividend_yield
-                prices.loc[prices.year == y, 'dividend_yield_until_now'] = dividend_yield_sum / count
+                prices.loc[prices.year == y, 'dividend_yield_percent'] = dividend_yield_percent
+                prices.loc[prices.year == y, 'dividend_yield_yearly_avg'] = dividend_yield_sum / count
+                prices.loc[prices.year == y, 'dividend_yield_yearly_avg_percent'] = dividend_yield_sum_percent / count
 
         return df
 
@@ -150,12 +161,15 @@ class Stats(Alias):
                                     '<br>      estimated taxes (sell)                  : ' + prices.estimate_sell_taxes.apply(  lambda x: f'         {-x:8.2f}') + \
                                     '<br>                                               --------------------' + \
                                     '<br>                                                ' + prices.net_value_adjusted.apply(   lambda x: f'{x:8.2f}') + \
+                                    '<br><br>-------------------------------------------------------------------' + \
+                                    '<br>performance                                   : ' + prices.performance.apply(     lambda x: f'{x:8.2f}') + prices.performance_percent.apply(          lambda x: f' ({x:5.2f}%)') + \
+                                    '<br>            y.o.y.                            : ' + prices.performance_yoy.apply( lambda x: f'{x:8.2f}') + prices.performance_yoy_percent.apply( lambda x: f' ({x:5.2f}%)') + \
                                     '<br>-------------------------------------------------------------------' + \
-                                    '<br>performance                                   : ' + prices.performance.apply(          lambda x: f'{x:8.2f}') + prices.performance_percent.apply(          lambda x: f' ({x:5.2f}%)') + \
-                                    '<br>            (adjusted)                        : ' + prices.performance_adjusted.apply( lambda x: f'{x:8.2f}') + prices.performance_adjusted_percent.apply( lambda x: f' ({x:5.2f}%)') + \
-                                    '<br>-------------------------------------------------------------------' + \
-                                    '<br>dividend yield ' + prices.year.apply(str) + '                           : ' + prices.dividend_yield.apply(       lambda x: f'{x:8.2f}%') + \
-                                    '<br>               p.a. average until today       : ' + prices.dividend_yield_until_now.apply(lambda x: f'{x:8.2f}%') + \
+                                    '<br>performance (adjusted)                        : ' + prices.performance_adjusted.apply(     lambda x: f'{x:8.2f}') + prices.performance_adjusted_percent.apply(          lambda x: f' ({x:5.2f}%)') + \
+                                    '<br>            y.o.y.                            : ' + prices.performance_adjusted_yoy.apply( lambda x: f'{x:8.2f}') + prices.performance_adjusted_yoy_percent.apply( lambda x: f' ({x:5.2f}%)') + \
+                                    '<br><br>-------------------------------------------------------------------' + \
+                                    '<br>dividend yield ' + prices.year.apply(str) + '                           : ' + prices.dividend_yield.apply(       lambda x: f'{x:8.2f}') + prices.dividend_yield_percent.apply(       lambda x: f' ({x:5.2f}%)') + \
+                                    '<br>               p.a. average until today       : ' + prices.dividend_yield_yearly_avg.apply(lambda x: f'{x:8.2f}') + prices.dividend_yield_yearly_avg_percent.apply(lambda x: f' ({x:5.2f}%)') + \
                                     '<br>-------------------------------------------------------------------' + \
                 (prices.ddividends + prices.dfees + prices.dtaxes).apply(lambda x: '<br>Single day payments:' if x else '') + \
                 prices.ddividends.apply(lambda x: '' if x == 0 else f'<br>     dividends:                                 {x:8.2f}') + \

@@ -3,16 +3,16 @@ from tools.alias import Alias
 from model.aliases import Aliases
 from model.tracker import Tracker as Trackers
 
-class Tracker(Alias):
+class Track(Alias):
     def run(self):
         import argparse
         ap = argparse.ArgumentParser()
-        ap.add_argument('tool', choices=['tracker'], help=f'Subcommand tracker')
+        ap.add_argument('tool', choices=['track'], help=f'Subcommand track')
 
         ap.add_argument('name', help=f'ISIN or alias identifying a security.')
-        ap.add_argument('tracker', help=f'Trakcer symbol on yahoo finance.')
-        ap.add_argument('--info', default=None, help=f'Tracker symbol on yahoo finance.')
-        ap.add_argument('--currency', default=None, help=f'Tracker symbol on yahoo finance.')
+        ap.add_argument('ticker', help=f'Ticker symbol on yahoo finance.')
+        ap.add_argument('--info', default=None, help=f'Ticker symbol on yahoo finance.')
+        ap.add_argument('--currency', default=None, help=f'Ticker symbol on yahoo finance for currency conversion.')
 
         ap.add_argument('--verbose', '-v', action='store_true', default=False, help='Verbose printing.')
         ap.add_argument('--weak-match', action='store_true', default=False, help='Enables weak matching of isin and alias for <name>')

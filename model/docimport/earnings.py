@@ -6,7 +6,7 @@ def parse_qust(text, name):
     nv['percent'] =  parse_float(s[0])
     s = s[1][1:].split(')')
     nv['EUR'] = parse_float(s[0][5:-1])
-    s = s[1].split()
+    s = s[0].split()
     nv['unit'] = s[0]
     nv['value'] = parse_float(s[1])
     return nv

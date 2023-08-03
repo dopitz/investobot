@@ -24,6 +24,7 @@ def import_folder(path: str, archive: str):
 
 def import_pdf(filename: str, archive: str):
     reader = PdfReader(filename)
+    print(filename)
 
     # slect import type
     page = reader.pages[0]

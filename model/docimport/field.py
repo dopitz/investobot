@@ -77,4 +77,11 @@ def parse_fields(fields: [], text):
     # we are not interested in last field
     positions.pop()
 
+    for f,b,e in positions:
+        print(f)
+        print(b)
+        print(e)
+        print(text[b:e])
+        f.parse(text[b:e], f.source)
+
     return {f.alias: f.parse(text[b:e], f.source) for (f,b,e) in positions}
